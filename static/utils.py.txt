@@ -8,7 +8,6 @@ class Config:
         self.CONFIG = self._get_config()
         self.PREFIX = self.CONFIG["prefix"]
         self.TOKEN = self._get_env_var("TOKEN")
-        self.TEAM_MANAGER = self.CONFIG["tourney_manager"]
 
     def _get_config(self):
         return json.load(open(self.CONFIG_PATH, "r"))
