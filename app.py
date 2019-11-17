@@ -9,7 +9,9 @@ def snakeify(uin):
     spacing = (" ", "_", "-")
 
     for ind, i in enumerate(uin):
-        if i in spacing:
+        if i not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_- ":
+            continue
+        elif i in spacing:
             if repeated:
                 continue
 
@@ -57,9 +59,10 @@ def get_static():
     return output
 
 # Get essential meta about bot
-bot_name = snakeify(input("Bot's name: "))
+bot_name = input("Bot's name: ")
+bot_prefix = input("Bot's prefix: ")[0]
 description = input("Bot description (1-liner): ")
-cmdlist = [input(f"[{i+1}]: Command name: ") for i in range(int(input("Number of commands: ")))]
+cmdlist = [input(f"[{i+1}] Command name: ") for i in range(int(input("Number of commands: ")))]
 static_text = get_static()
 
 # Slug & pacal names
@@ -70,11 +73,19 @@ bot_pascal = pascal_case(bot_name)
 os.mkdir(bot_slug)
 os.chdir(bot_slug)
 
-# Write to README.md file in bot folder
+# Write to README.md file in top-level folder
 with open("README.md", "w+") as fstream:
-    cog_names = "\n".join([f"- **{snakeify(i)}** (*{pascal_case(i)}*)" for i in cmdlist])
-    readme_contents = f"# {bot_name}\n\n{description}\n\n## Cogs\n\n{cog_names}"
+    cog_names = "\n".join([f"- **{pascal_case(i)}** (`{snakeify(i)}`)" for i in cmdlist])
+    readme_run = static_text["readme_run"]
+    readme_contents = f"# {bot_name}\n\n{description}\n\n## Cogs\n\n{cog_names}\n\n{readme_run}"
     fstream.write(readme_contents)
+
+# Dump simple config
+json.dump({"prefix": bot_prefix}, open("config.json", "w+"))
+
+# Write to app.py file in top-level folder
+with open("app.py", "w+") as fstream:
+    fstream.write(f"from {bot_slug} import client, bot_config\n\nclient.run(bot_config.TOKEN)\n")
 
 # Make bot folder & cd
 os.mkdir(bot_slug)
@@ -99,7 +110,7 @@ for cog in cmdlist:
 
     with open(f"{cog_slug}.py", "w+") as fstream:
         file_format = f"""from discord.ext import commands
-from {bot_name}.utils import embed_generator, load_message
+from {bot_slug}.utils import embed_generator, load_message
 
 class {cog_pascal}(commands.Cog):
     def __init__(self, client):
