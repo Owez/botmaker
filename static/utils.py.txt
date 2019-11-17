@@ -1,0 +1,30 @@
+import os
+import json
+from discord import Embed
+
+class Config:
+    def __init__(self):
+        self.CONFIG_PATH = "config.json"
+        self.CONFIG = self._get_config()
+        self.PREFIX = self.CONFIG["prefix"]
+        self.TOKEN = self._get_env_var("TOKEN")
+        self.TEAM_MANAGER = self.CONFIG["tourney_manager"]
+
+    def _get_config(self):
+        return json.load(open(self.CONFIG_PATH, "r"))
+
+    def _get_env_var(self, var_name):
+        return os.environ[var_name]
+
+def get_cogs():
+    out_list = []
+
+    for cog_file in os.walk(os.path.dirname(os.path.abspath(__file__)) + "/cogs/"):
+        for cog in cog_file[2]:
+            if cog[-3:] == ".py":
+                out_list.append(f"cogs.{cog[:-3]}")
+
+    return out_list
+
+def load_message(cog_name):
+    print(f"\t✓ Loaded {cog_name} cog!")
