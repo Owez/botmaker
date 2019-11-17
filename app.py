@@ -1,15 +1,48 @@
 import os
 import json
 
-def slugify(uin):
-    """Slugs text"""
+def snakeify(uin):
+    """Converts text to snake_case"""
 
-    return uin
+    out = ""
+    repeated = False
+    spacing = (" ", "_", "-")
+
+    for ind, i in enumerate(uin):
+        if i in spacing:
+            if repeated:
+                continue
+
+            out += "_"
+            repeated = True
+        else:
+            out += i
+            repeated = False
+    
+    return out.lower()
 
 def pascal_case(uin):
-    """Makes text into PascalCase"""
+    """Converts text into PascalCase"""
 
-    return uin
+    out = ""
+    should_start = True
+    should_cap = False
+
+    for ind, i in enumerate(uin):
+        if i not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_- ":
+            continue
+        if should_start:
+            out += i.upper()
+            should_start = False
+        elif i in ("-", "_", " "):
+            should_cap = True
+        elif should_cap:
+            out += i.upper()
+            should_cap = False
+        else:
+            out += i
+    
+    return out
 
 def get_static():
     """Gets static text from the `static/` directory"""
@@ -24,33 +57,44 @@ def get_static():
     return output
 
 # Get essential meta about bot
-bot_name = slugify(input("Bot's name: "))
+bot_name = snakeify(input("Bot's name: "))
 description = input("Bot description (1-liner): ")
 cmdlist = [input(f"[{i+1}]: Command name: ") for i in range(int(input("Number of commands: ")))]
 static_text = get_static()
 
 # Slug & pacal names
-bot_slug = slugify(bot_name)
+bot_slug = snakeify(bot_name)
 bot_pascal = pascal_case(bot_name)
 
 # Make project folder (will be `bot_name/bot_name/__init__.py` with top-level contaning meta)
 os.mkdir(bot_slug)
 os.chdir(bot_slug)
 
-# Write to README.md file in top-level
+# Write to README.md file in bot folder
 with open("README.md", "w+") as fstream:
-    fstream.write(f"# {bot_name}\n\n{description}\n")
+    cog_names = "\n".join([f"- **{snakeify(i)}** (*{pascal_case(i)}*)" for i in cmdlist])
+    readme_contents = f"# {bot_name}\n\n{description}\n\n## Cogs\n\n{cog_names}"
+    fstream.write(readme_contents)
 
 # Make bot folder & cd
 os.mkdir(bot_slug)
 os.chdir(bot_slug)
+
+# Write to __init__.py file in bot folder
+with open("__init__.py", "w+") as fstream:
+    init_file = f"from {bot_slug}.utils import Config, get_cogs\n" + static_text["__init__.py"]
+    fstream.write(init_file)
+
+# Add utils.py
+with open("utils.py", "w+") as fstream:
+    fstream.write(static_text["utils.py"])
 
 # Make cogs folder & cd
 os.mkdir("cogs")
 os.chdir("cogs")
 
 for cog in cmdlist:
-    cog_slug = slugify(cog)
+    cog_slug = snakeify(cog)
     cog_pascal = pascal_case(cog)
 
     with open(f"{cog_slug}.py", "w+") as fstream:
@@ -69,9 +113,3 @@ def setup(client):
 """
 
         fstream.write(file_format)
-
-# Back to top-level
-os.chdir("..")
-
-with open("utils.py", "w+") as fstream:
-    fstream.write(static_text["utils.py"])
