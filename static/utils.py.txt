@@ -27,3 +27,28 @@ def get_cogs():
 
 def load_message(cog_name):
     print(f"\t✓ Loaded {cog_name} cog!")
+
+def embed_generator(gen_text):
+    """
+    Discord embed generator, using a small templating system
+
+    - gen_text: a dict following the following syntax:
+        INGRESS SPEC
+        {
+            [BODY]: {
+                [FIELD NAME]: [FIELD TEXT],
+                [FIELD NAME]: [FIELD TEXT]
+            },
+            [META (optional)]: {
+                [SHOULD FOOTER (optional)]: [BOOL (default yes)]
+            }
+        }
+    < Returns embed object from discord
+    """
+
+    embed = Embed()
+
+    for field in gen_text["main"].items():
+        embed.add_field(name=field[0], value=field[1])
+
+    return embed
